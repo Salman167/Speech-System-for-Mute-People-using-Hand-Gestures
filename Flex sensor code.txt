@@ -1,0 +1,79 @@
+#include <SD.h>                           //include SD module library
+#include <TMRpcm.h>                       //include speaker control library
+
+#define SD_ChipSelectPin 4                //define CS pin
+#define flex1 A1
+#define flex2 A2
+
+TMRpcm tmrpcm;                            //crete an object for speaker library
+
+void setup()
+{
+  pinMode(flex1, INPUT);
+  pinMode(flex2, INPUT);
+  Serial.begin(9600);
+  
+  tmrpcm.speakerPin = 11;                  //define speaker pin. 
+                                          //you must use pin 9 of the Arduino Uno and Nano
+                                          //the library is using this pin
+  
+  if (!SD.begin(SD_ChipSelectPin)) {      //see if the card is present and can be initialized
+    
+    return;                               //don't do anything more if not
+  }
+  
+  tmrpcm.setVolume(7);                    //0 to 7. Set volume level
+}
+
+
+int val1 = 0, val2 = 0;
+
+void loop()
+{
+  int avg(int);
+  val1 = avg(flex1);
+  val2 = avg(flex2);
+  Serial.print("value 1 = "); Serial.println(val1);
+  
+  if((val1>550)&&(val2>370))
+  {
+    tmrpcm.play("1.wav");    
+    delay(3100);
+  }
+  else if((val1>550)&&(val2<370))
+  {
+    tmrpcm.play("2.wav");
+    delay(3100);
+  }
+  else if(((val1>460)&&(val1<530))&&(val2>370))
+  {
+    tmrpcm.play("3.wav");
+    delay(3100);
+  }
+  else if(((val1>460)&&(val1<530))&&(val2<370))
+  {
+    tmrpcm.play("4.wav");                                         // both sensors bent
+    delay(4000);
+  }
+  else if((val1<460)&&(val2>370))
+  {
+    tmrpcm.play("5.wav");                                         // both sensors bent
+    delay(3100);
+  }
+  else
+  {
+    tmrpcm.play("6.wav");                                         // both sensors bent
+    delay(3100);
+  }
+}
+
+
+int avg(int flex)
+{
+  long int sum=0;
+  for(int i=0;i<200;i++)
+  {
+    sum=sum+analogRead(flex);
+  }
+  return (sum/200);
+}
