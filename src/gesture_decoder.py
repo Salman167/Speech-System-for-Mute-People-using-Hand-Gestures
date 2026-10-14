@@ -56,3 +56,36 @@ def decode_accelerometer(x_out: float, y_out: float) -> tuple[str, str] | None:
     else:
         return None
     return clip, ACCEL_CLIPS[clip]
+
+
+def decode_flex_gesture(val1: int, val2: int) -> tuple[str, str] | None:
+    """Flex phrases only. Gaps between the bend bands stay silent.
+
+    The original flex sketch plays 6.wav for every unmatched reading, including
+    a resting hand. This helper is what the combined glove uses: thanks is the
+    open-hand pair (finger 1 below 460 and finger 2 below 370), and the bands
+    between thresholds do not speak.
+    """
+    if val1 > 550 and val2 > 370:
+        clip = "1.wav"
+    elif val1 > 550 and val2 < 370:
+        clip = "2.wav"
+    elif 460 < val1 < 530 and val2 > 370:
+        clip = "3.wav"
+    elif 460 < val1 < 530 and val2 < 370:
+        clip = "4.wav"
+    elif val1 < 460 and val2 > 370:
+        clip = "5.wav"
+    elif val1 < 460 and val2 < 370:
+        clip = "6.wav"
+    else:
+        return None
+    return clip, FLEX_CLIPS[clip]
+
+
+def decode_glove(val1: int, val2: int, x_out: float, y_out: float) -> tuple[str, str] | None:
+    """Combined glove. A finger gesture wins; otherwise tilt is used."""
+    flex = decode_flex_gesture(val1, val2)
+    if flex is not None:
+        return flex
+    return decode_accelerometer(x_out, y_out)
